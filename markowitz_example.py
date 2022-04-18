@@ -34,7 +34,7 @@ ret_tangent, std_tangent, _ = ef_max_sharpe.portfolio_performance()
 ax.scatter(std_tangent, ret_tangent, marker="*", s=100, c="r", label="Max Sharpe")
 
 # Generate random portfolios
-n_samples = 10000
+n_samples = 50000
 w = np.random.dirichlet(np.ones(ef.n_assets), n_samples)
 rets = w.dot(ef.expected_returns)
 stds = np.sqrt(np.diag(w @ ef.cov_matrix @ w.T))
