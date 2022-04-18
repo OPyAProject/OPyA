@@ -94,3 +94,31 @@ sectors.groupby('sector')\
             pctdistance=0.9);
 plt.axis('off');
 plt.show()
+
+#Plot sectors indexes in the portfolio (lineplot)
+
+data100_by_sector=pd.DataFrame(0, index=data100.index, columns=sectors['sector'].unique())
+for ticker in data100.columns.to_list():
+    data100_by_sector[sectors.loc[ticker,'sector']]+=data100[ticker]
+data100_by_sector['sum']=index_fictif
+data100_by_sector.drop('sum',axis=1).plot(figsize=(16,16));
+
+#Plot sectors return with a 100 initial investment (lineplot)
+
+data100_by_sector_inv=data100_by_sector.div(data100_by_sector.iloc[0]/100)
+
+fig,ax = plt.subplots(figsize=(16,16))
+data100_by_sector_inv.plot(ax=ax, x_compat=True)
+ax.xaxis.set_major_locator(mdates.YearLocator())
+for line in ax.get_lines():
+    line.alpha=0.2
+    if line.get_label() == 'sum':
+        line.set_linewidth(3)
+plt.ylabel('Return')
+plt.show()
+
+#Plot sectors return with a 100 initial investment (boxplot)
+
+order = data100_by_sector_inv.median().sort_values().index.to_list()
+data100_by_sector_inv.boxplot(column=order,rot=90);
+plt.show()
