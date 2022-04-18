@@ -1,0 +1,84 @@
+#General
+from datetime import datetime
+import pandas as pd
+import numpy as np
+
+#Darts
+from darts import TimeSeries, concatenate
+from darts.dataprocessing.transformers import Scaler
+from darts.models import TFTModel
+from darts.metrics import mape
+from darts.utils.timeseries_generation import datetime_attribute_timeseries
+from darts.utils.likelihood_models import QuantileRegression
+from darts.dataprocessing.transformers import MissingValuesFiller
+
+#Pytorch
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+
+#data100 creation
+data100=pd.read_csv('../input/data100-april/data100_09042022.csv',header=0,parse_dates=True,index_col=0)
+
+def train_model(ticker,max_date):
+    #TimeSeries creation
+    data=data100[ticker]
+    data=data[data.index<max_date]
+    data_ts=TimeSeries.from_series(data,freq='D')
+    #Empty values filling
+    transformer = MissingValuesFiller()
+    data_ts=transformer.transform(data_ts)
+    #Scaling
+    scaler = Scaler()
+    train_data_scaled = scaler.fit_transform(data_ts)
+
+    my_stopper = EarlyStopping(
+        monitor="train_loss",
+        patience=5,
+        min_delta=0.05,
+        mode='min',
+    )
+
+    pl_trainer_kwargs={"callbacks": [my_stopper]}
+
+    quantiles = [
+        0.01,
+        0.05,
+        0.1,
+        0.15,
+        0.2,
+        0.25,
+        0.3,
+        0.4,
+        0.5,
+        0.6,
+        0.7,
+        0.75,
+        0.8,
+        0.85,
+        0.9,
+        0.95,
+        0.99,
+    ]
+
+    model = TFTModel(
+        input_chunk_length=90,
+        output_chunk_length=90,
+        hidden_size=64,
+        lstm_layers=1,
+        num_attention_heads=4,
+        dropout=0.20,
+        batch_size=32,
+        n_epochs=100,
+        add_relative_index=True,
+        add_encoders=None,
+        likelihood=QuantileRegression(
+            quantiles=quantiles
+        ),
+        random_state=42,
+        pl_trainer_kwargs={"accelerator": "gpu", "gpus": -1, "auto_select_gpus": True}
+    )
+
+    model.fit(
+        train_data_scaled,
+        past_covariates=covariates
+        )
+    return [model,scaler]
