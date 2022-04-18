@@ -1,17 +1,96 @@
 #library import
+#General
 import pandas as pd
 import bt
 import datetime
 import numpy as np
 from scipy.optimize import minimize
 
-#Creation of a ticker_list_100 with format 'ticker1,ticker2,...,tickerN'
+#Plotting
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+plt.rcParams['axes.grid'] = True
+import seaborn as sns
 
-df=pd.read_csv('/data/sp500_100first.csv')
+#Data import
+
+#Creation of a ticker_list_100 with format 'ticker1,ticker2,...,tickerN'
+df=pd.read_csv("data/sp500_100first.csv")
 ticker_list_100=df.iloc[0][0].lower()
 for index in df.index[1:]:
     ticker_list_100+=','+df.iloc[index][0].lower()
 
+"""
 #Creation of data100 dataset
 data100 = bt.get(ticker_list_100, start='2017-01-01')
 data100.head(10)
+data100.to_csv('/data/data100_XXXXXX.csv')
+"""
+
+#Import from local .csv
+data100=pd.read_csv('data/data100_09042022.csv',index_col=0,header=0,parse_dates=True)
+
+#Data exploration
+print('Rows '+str(data100.shape[0]))
+print('Columns '+str(data100.shape[1]))
+print(data100.index)
+
+#Data cleaning
+print(data100.isna().sum().sum()) #no NaN
+print(data100.duplicated().sum()) #no duplicates
+print(data100.dtypes) #All values are float64
+print(data100.describe()) #No visible outliers
+
+
+#Dataviz
+
+#Plot all stocks
+
+# define subplot grid
+fig, axs = plt.subplots(nrows=20, ncols=5, figsize=(15, 30))
+fig.suptitle("Daily closing prices", fontsize=18)
+# loop through tickers and axes
+for ticker, ax in zip(data100.columns.tolist(), axs.ravel()):
+    # filter df for ticker and plot on specified axes
+    data100[ticker].plot(ax=ax)
+    # chart formatting
+    ax.set_title(ticker.upper())
+    ax.set_xlabel("")
+    ax.xaxis.set_major_locator(mdates.YearLocator())
+fig.tight_layout(rect=[0, 0, 1, 0.98])
+plt.show()
+
+#Plot index made of the sum of all stocks
+
+index_fictif=data100.sum(axis=1)
+index_fictif.plot();
+ax=plt.gca()
+ax.xaxis.set_major_locator(mdates.YearLocator())
+plt.title('Index fictif somme des valeurs');
+plt.show()
+
+#Plot sectors repartition in the portfolio
+
+#import csv
+#columns = (TICKER,name,sector,subsector)
+sectors=pd.read_csv('data/sp500_sectors.csv',encoding='cp1252')
+#tickers to lower
+sectors['ticker']=sectors['ticker'].map(lambda x:x.lower())
+#filtering on 100 actions and set index to ticker
+sectors=sectors[sectors['ticker'].isin(data100.columns.to_list())]
+sectors=sectors.set_index('ticker')
+#Plotting
+sectors.groupby('sector')\
+    .agg('count')\
+    .sort_values(
+                by='name',
+                ascending=False)\
+    .plot.pie(y='name',
+            figsize=(16,9),
+            title='100 Stocks sectors',
+            autopct= lambda x: '{:.0f}'.format(x*sectors.shape[0]/100),
+            legend=False,
+            textprops={'fontsize': 12},
+            pctdistance=0.9);
+plt.axis('off');
+plt.show()
