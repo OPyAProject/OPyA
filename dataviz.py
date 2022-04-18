@@ -44,7 +44,7 @@ print(data100.describe()) #No visible outliers
 
 #Dataviz
 
-#Plot all stocks
+#Plot all stocks #1
 
 # define subplot grid
 fig, axs = plt.subplots(nrows=20, ncols=5, figsize=(15, 30))
@@ -60,7 +60,7 @@ for ticker, ax in zip(data100.columns.tolist(), axs.ravel()):
 fig.tight_layout(rect=[0, 0, 1, 0.98])
 plt.show()
 
-#Plot index made of the sum of all stocks
+#Plot index made of the sum of all stocks #2
 
 index_fictif=data100.sum(axis=1)
 index_fictif.plot();
@@ -69,7 +69,7 @@ ax.xaxis.set_major_locator(mdates.YearLocator())
 plt.title('Index fictif somme des valeurs');
 plt.show()
 
-#Plot sectors repartition in the portfolio
+#Plot sectors repartition in the portfolio #3
 
 #import csv
 #columns = (TICKER,name,sector,subsector)
@@ -95,15 +95,16 @@ sectors.groupby('sector')\
 plt.axis('off');
 plt.show()
 
-#Plot sectors indexes in the portfolio (lineplot)
+#Plot sectors indexes in the portfolio (lineplot) #4
 
 data100_by_sector=pd.DataFrame(0, index=data100.index, columns=sectors['sector'].unique())
 for ticker in data100.columns.to_list():
     data100_by_sector[sectors.loc[ticker,'sector']]+=data100[ticker]
 data100_by_sector['sum']=index_fictif
 data100_by_sector.drop('sum',axis=1).plot(figsize=(16,16));
+plt.show()
 
-#Plot sectors return with a 100 initial investment (lineplot)
+#Plot sectors return with a 100 initial investment (lineplot) #5
 
 data100_by_sector_inv=data100_by_sector.div(data100_by_sector.iloc[0]/100)
 
@@ -117,7 +118,7 @@ for line in ax.get_lines():
 plt.ylabel('Return')
 plt.show()
 
-#Plot sectors return with a 100 initial investment (boxplot)
+#Plot sectors return with a 100 initial investment (boxplot) #6
 
 order = data100_by_sector_inv.median().sort_values().index.to_list()
 data100_by_sector_inv.boxplot(column=order,rot=90);
