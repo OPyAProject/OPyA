@@ -64,9 +64,9 @@ for ticker in tickerlist:
     df_s['20D-EMA'] = df_s[ticker].ewm(span=20,adjust=False).mean()
     df_s['50D-EMA'] = df_s[ticker].ewm(span=50,adjust=False).mean()
     df_s['100D-EMA'] = df_s[ticker].ewm(span=100,adjust=False).mean()
-    MSE_20D_EMA=mean_squared_error(df_s[ticker],df_s['20D-SMA'])
-    MSE_50D_EMA=mean_squared_error(df_s[ticker],df_s['50D-SMA'])
-    MSE_100D_EMA=mean_squared_error(df_s[ticker],df_s['100D-SMA'])
+    MSE_20D_EMA=mean_squared_error(df_s[ticker],df_s['20D-EMA'])
+    MSE_50D_EMA=mean_squared_error(df_s[ticker],df_s['50D-EMA'])
+    MSE_100D_EMA=mean_squared_error(df_s[ticker],df_s['100D-EMA'])
 
 image = Image.open('./img/7_aapl_sma.png')
 st.image(image)
