@@ -3,8 +3,8 @@ import pandas as pd
 
 st.write('# Finding features')
 
+#####################################SECTORS ANALYSIS#############################################
 st.write('### Sectors analysis')
-
 st.write('The companies present in the dataset are distributed among 11 sectors.')
 
 from PIL import Image
@@ -54,7 +54,7 @@ st.write('Only 2 sectors have a lower correlation coefficient. For our models, w
 
 st.table(df)
 
-#RSI
+#####################################RSI#############################################
 st.write('## Relative Strength Index (RSI)')
 st.write('The relative strength index (RSI) is a momentum indicator used in technical analysis that measures the magnitude of recent price changes to evaluate overbought or oversold conditions in the price of a stock or other asset.')
 st.write('The below example shows an application on the Apple and Microsoft stocks. When the rsi is low, we can expect a rise because the stock is likely to be under evaluated.')
@@ -65,7 +65,7 @@ image = Image.open('./img/6_aapl_rsi.png')
 st.image(image)
 
 
-#SMA
+#####################################SMA#############################################
 st.write('## Simple Moving Average (SMA) and Exponential Moving Average (EMA)')
 from sklearn.metrics import mean_squared_error 
 tickerlist=['aapl']
@@ -79,7 +79,7 @@ for ticker in tickerlist:
     MSE_50D_SMA=mean_squared_error(df_s[ticker],df_s['50D-SMA'])
     MSE_100D_SMA=mean_squared_error(df_s[ticker],df_s['100D-SMA'])
 
-#EMA
+#####################################EMA#############################################
 tickerlist=['aapl']
 for ticker in tickerlist:
     df_s = data100[ticker].to_frame()
@@ -102,3 +102,5 @@ st.image(image)
 st.write(f"MSE_20D_EMA : {MSE_20D_EMA}")
 st.write(f"MSE_50D_EMA : {MSE_50D_EMA}")
 st.write(f"MSE_100D_EMA : {MSE_100D_EMA}")
+
+st.write('The 50D-EMA seems to capture the tendencies without too much overfitting and has a better MSE than the equivalent SMA')
