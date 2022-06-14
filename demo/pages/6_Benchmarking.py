@@ -50,14 +50,14 @@ sOPAMarkowitzML = bt.Strategy('sOPAMarkowitzML',
 testOPAMarkowitzML= bt.Backtest(sOPAMarkowitzML, data)
 
 #Run
-resML = bt.run(testBenchmarkSP500,
-               testOPAMarkowitzMLOnce,
+resML = bt.run(#testBenchmarkSP500,
+               #testOPAMarkowitzMLOnce,
                testOPAMarkowitzML)
 #View result
-res.plot()
+resML.plot()
 
 #View stats
-res.display()
+resML.display()
 '''
 st.code(code)
 image = Image.open('./img/res_display.PNG')
