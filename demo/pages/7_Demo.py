@@ -33,21 +33,25 @@ BENCHMARK_TICKER = 'gspc'
 DEANNUALIZATION_PERIOD = 252
 risk_free_rate = 0.0093
 data_all=pd.read_csv('./csv/data100_09042022.csv',index_col=0,header=0,parse_dates=True)
-benchmark_all = pd.read_csv('./csv/benchmark.csv',index_col=0,header=0,parse_dates=True)
+benchmark_all = pd.read_csv('./csv/benchmark_data.csv',index_col=0,header=0,parse_dates=True)
 data=data_all
 benchmark=benchmark_all
-
+select_estimation_method = None
 st.write('# Demo')
 select_mode = st.sidebar.selectbox('Select Mode :',  ('Static (Buy and Hold)','Dynamic'))
 select_strategy = st.sidebar.selectbox('Select Strategy :',  ('Markowitz','Risk Parity', 'Momentum'))
 if select_strategy == 'Markowitz':
-    select_estimation_method = st.sidebar.selectbox('Select E(R) Estimation method:',  ('Historical Mean','EMA', 'CAPM',  'Forecast'))
+    select_estimation_method = st.sidebar.selectbox('Select E(R) Estimation method:',  ('Historical Mean','EMA', 'CAPM'))#,  'Forecast'))
+
+min_value = datetime.date(2021, 1, 1)
+if select_estimation_method == 'Forecast':
+    min_value = datetime.date(2022, 2, 1)
 
 start_date = st.sidebar.date_input(
-     "Start date",
-     datetime.date(2021, 1, 1),min_value=datetime.date(2021, 1, 1))
+        "Start date",
+        min_value,min_value=min_value)
 
-risk_free_rate=st.sidebar.number_input(label='Risk free rate',min_value=0.0,step=0.001,value=0.093,format="%.3f")
+risk_free_rate=st.sidebar.number_input(label='Risk free rate',min_value=0.0,step=0.001,value=0.0093,format="%.4f")
 
 
 ER_ESTIMATION_METHOD = Enum('ER_ESTIMATION_METHOD', 'MEAN EMA CAPM PROPHET')
@@ -94,7 +98,7 @@ class OPAMarkowitz(bt.Algo):
             data_ticker=historical_returns[ticker].to_frame()
             data_ticker.reset_index(inplace=True)
             data_ticker.columns=["ds","y"]
-            with open(PATH_DATA+ticker+FILE_NAME_JSON_MODEL, 'r') as fin:
+            with open('./json/'+ticker+FILE_NAME_JSON_MODEL, 'r') as fin:
                 ticker_model = model_from_json(json.load(fin))  # Load model
             future = pd.date_range(data_ticker['ds'].max()+pd.DateOffset(days=1), periods=30)
             future = pd.DataFrame(future)
@@ -221,7 +225,17 @@ if select_mode=='Static (Buy and Hold)' and select_strategy=='Markowitz' and sel
                         bt.algos.SelectHasData(),                                    
                         OPAMarkowitz(er_estimation_method=ER_ESTIMATION_METHOD.CAPM,benchmark_ticker=BENCHMARK_TICKER,rf=risk_free_rate),
                         bt.algos.Rebalance()])
-    #Risk Parity
+if select_mode=='Dynamic' and select_strategy=='Markowitz' and select_estimation_method=='Forecast':
+    strategy = bt.Strategy('sOPAMarkowitzML', [bt.algos.RunAfterDate(start_date),bt.algos.RunMonthly(),
+                        bt.algos.SelectHasData(),
+                        OPAMarkowitz(er_estimation_method=ER_ESTIMATION_METHOD.PROPHET,rf=risk_free_rate),
+                        bt.algos.Rebalance()])
+if select_mode=='Static (Buy and Hold)' and select_strategy=='Markowitz' and select_estimation_method=='Forecast':
+    strategy = bt.Strategy('sOPAMarkowitzMLOnce', [bt.algos.RunAfterDate(start_date),bt.algos.RunOnce(),
+                        bt.algos.SelectHasData(),                                    
+                        OPAMarkowitz(er_estimation_method=ER_ESTIMATION_METHOD.PROPHET,rf=risk_free_rate),
+                        bt.algos.Rebalance()])
+#Risk Parity
 if select_mode=='Dynamic' and select_strategy=='Risk Parity':
     strategy = bt.Strategy('sRiskParity3M',[bt.algos.RunAfterDate(start_date),
                         bt.algos.RunMonthly(),
@@ -251,10 +265,10 @@ if select_mode=='Static (Buy and Hold)' and select_strategy=='Momentum':
     
 if select_strategy=='Markowitz' and select_estimation_method=='CAPM':
         data=data.join(benchmark)
-else:
-    test=bt.Backtest(strategy,data)
+
+test=bt.Backtest(strategy,data)
 res=bt.run(test)
 res.plot()
-plt.xlim(['1-1-2021','8-4-2022'])
+plt.xlim([start_date,'4-8-2022'])
 fig=plt.gcf()
 st.pyplot(fig)
